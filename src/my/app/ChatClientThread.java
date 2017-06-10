@@ -50,7 +50,7 @@ public class ChatClientThread implements Runnable {
 		
 		while(true){
 			try{
-				System.out.println(" czytam");
+				//System.out.println(" czytam");
 				client.handle(streamIn.readUTF());
 			}catch (IOException ioe) {
 				System.out.println("Listening error: "+ ioe.getMessage());

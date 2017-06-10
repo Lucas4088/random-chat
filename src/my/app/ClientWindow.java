@@ -22,6 +22,7 @@ public class ClientWindow extends JFrame implements Runnable {
 	private JTextArea messageSendArea = new JTextArea();
 	private CardLayout cards;
 	private ChatClient chatClient = null;
+	private JButton btnSend;
 	/**
 	 * Launch the application.
 	 */
@@ -94,15 +95,19 @@ public class ClientWindow extends JFrame implements Runnable {
 		messageSendArea.setBounds(10, 325, 323, 52);
 		chatCard.add(messageSendArea);
 		
-		JButton btnSend = new JButton("Send");
+		btnSend = new JButton("Send");
 		btnSend.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				//1getUserMessage();
 				messageDisplayArea.append("You: "+messageSendArea.getText()+"\n");
-				chatClient.getUserMessage(getUserTextMessage("Sent"));
+				chatClient.getUserMessage(getUserTextMessage("Send"));
 				
 			}
 		});
+		
+		btnSend.setEnabled(false);
+		messageSendArea.setEditable(false);
+		
 		btnSend.setBounds(343, 325, 70, 52);
 		chatCard.add(btnSend);
 		
@@ -146,6 +151,7 @@ public class ClientWindow extends JFrame implements Runnable {
 		messageSendArea.setText("");
 		//chatClient.setSend(true);
 		messageSendArea.requestFocus();
+		System.out.println(msg);
 		return msg;
 	}
 	
@@ -154,6 +160,9 @@ public class ClientWindow extends JFrame implements Runnable {
 		messageDisplayArea.append("\n");
 	}
 
-	
+	public void allowClientToWrite(){
+		btnSend.setEnabled(true);
+		messageSendArea.setEditable(true);
+	}
 	
 }

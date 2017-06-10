@@ -8,7 +8,7 @@ public class ChatServerThread extends Thread {
 	private ChatServer server = null;
 	private Socket socket = null;
 	private int ID = -1;
-	private boolean chatting;
+	private volatile boolean chatting;
 	private DataInputStream streamIn = null;
 	private DataOutputStream streamOut = null;
 	
@@ -33,7 +33,10 @@ public class ChatServerThread extends Thread {
 		while(true){
 			try{
 				//System.out.println(streamIn.readUTF());
-				server.handle(ID, streamIn.readUTF());
+				if(!chatting)
+				findTalker();
+				
+				server.handle(streamIn.readUTF());
 			}catch(IOException ioe){
 				System.out.println(ID + " ERROREN reading: "+ ioe.getMessage());
 				server.remove(ID);
@@ -64,12 +67,21 @@ public class ChatServerThread extends Thread {
 	public void open() throws IOException{
 		streamIn = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
 		streamOut = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+		
+	}
+	
+	public void findTalker(){
+		server.findSecondTalker(this);
 	}
 	
 	public void close() throws IOException {
 		if(socket != null) socket.close();
 		if(streamIn != null) streamIn.close();
 		if(streamOut != null) streamOut.close();
+	}
+	
+	public void endTalk(){
+		
 	}
 	
 	public boolean isChatting() {
