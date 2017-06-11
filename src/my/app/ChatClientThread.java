@@ -15,16 +15,12 @@ public class ChatClientThread implements Runnable {
 	private ChatClient client = null;
 	private DataInputStream streamIn = null;
 	
-	
 	public ChatClientThread(ChatClient cli, Socket soc){
-		//new ClientWindow().setVisible(true);
 		client = cli;
 		socket = soc;
 		open();
-		
 	}
 	
-
 	//Otwieranie input stream
 	public void open() {
 		try{
@@ -49,8 +45,8 @@ public class ChatClientThread implements Runnable {
 	public void run(){
 		
 		while(true){
+			System.out.println("Working");
 			try{
-				//System.out.println(" czytam");
 				client.handle(streamIn.readUTF());
 			}catch (IOException ioe) {
 				System.out.println("Listening error: "+ ioe.getMessage());
@@ -58,7 +54,10 @@ public class ChatClientThread implements Runnable {
 			}
 		}
 	}
-
-
+	
+	
+	public void stop(){
+		this.stop();
+	}
 
 }

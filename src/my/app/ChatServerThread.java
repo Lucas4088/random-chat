@@ -9,6 +9,7 @@ public class ChatServerThread extends Thread {
 	private Socket socket = null;
 	private int ID = -1;
 	private volatile boolean chatting;
+	private volatile boolean lookingForChat;
 	private DataInputStream streamIn = null;
 	private DataOutputStream streamOut = null;
 	
@@ -17,7 +18,7 @@ public class ChatServerThread extends Thread {
 		server = serv;
 		socket = soc;
 		ID = socket.getPort();
-		chatting = false;
+		chatting = true;
 		try {
 			open();
 		} catch (IOException e) {
@@ -32,11 +33,15 @@ public class ChatServerThread extends Thread {
 		System.out.println("Server Thread " + ID + " runninig");
 		while(true){
 			try{
-				//System.out.println(streamIn.readUTF());
-				if(!chatting)
-				findTalker();
-				
 				server.handle(streamIn.readUTF());
+				if(!chatting){
+					//System.out.println("find talker");
+					findTalker();
+					//System.out.println("Talker found ");
+				}
+				//System.out.println("running:"+this.ID);
+				
+				
 			}catch(IOException ioe){
 				System.out.println(ID + " ERROREN reading: "+ ioe.getMessage());
 				server.remove(ID);
@@ -67,7 +72,6 @@ public class ChatServerThread extends Thread {
 	public void open() throws IOException{
 		streamIn = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
 		streamOut = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-		
 	}
 	
 	public void findTalker(){
@@ -90,5 +94,13 @@ public class ChatServerThread extends Thread {
 
 	public void setChatting(boolean chatting) {
 		this.chatting = chatting;
+	}
+	
+	public boolean isLookingForChat() {
+		return lookingForChat;
+	}
+
+	public void setLookingForChat(boolean lFC) {
+		this.lookingForChat = lFC;
 	}
 }

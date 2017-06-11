@@ -36,9 +36,6 @@ public class ClientWindow extends JFrame implements Runnable {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					//ClientWindow window = new ClientWindow();
-					/*window.frame.setVisible(true);*/
-					//window.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -58,8 +55,7 @@ public class ClientWindow extends JFrame implements Runnable {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
-		/*frame = new JFrame();*/
-		/*frame.*/setBounds(100, 100, 632, 427);
+		setBounds(100, 100, 632, 427);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setTitle("Client");
 		cardLayout = new CardLayout();
@@ -69,16 +65,13 @@ public class ClientWindow extends JFrame implements Runnable {
 		
 		
 		JPanel connectionCard = new JPanel();
-		//cardLayout.addLayoutComponent(connectionCard, "name_779615792272941");
 		connectionCard.setLayout(null);
 		
 		JPanel chatCard = new JPanel();
-		//cardLayout.addLayoutComponent(chatCard, "name_779615801882191");
 		chatCard.setLayout(null);
 		
 		cardPanel.add(connectionCard, "Conenction Card");
 		cardPanel.add(chatCard, "Chat Card");
-		//cardLayout.show(chatCard, "Chat Card");
 		
 		JButton btnNewButton = new JButton("Connect");
 		btnNewButton.addActionListener(new ActionListener() {
@@ -87,7 +80,7 @@ public class ClientWindow extends JFrame implements Runnable {
 				cardLayout.show(cardPanel, "Chat Card");
 			}
 		});
-		/*frame.*/getContentPane().setLayout(new GridLayout(0, 1, 0, 0));
+		getContentPane().setLayout(new GridLayout(0, 1, 0, 0));
 		btnNewButton.setBounds(226, 174, 101, 34);
 		connectionCard.add(btnNewButton);
 		
@@ -98,7 +91,6 @@ public class ClientWindow extends JFrame implements Runnable {
 		btnSend = new JButton("Send");
 		btnSend.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				//1getUserMessage();
 				messageDisplayArea.append("You: "+messageSendArea.getText()+"\n");
 				chatClient.getUserMessage(getUserTextMessage("Send"));
 				
@@ -115,6 +107,8 @@ public class ClientWindow extends JFrame implements Runnable {
 		btnNext.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				chatClient.getUserMessage(getUserTextMessage("Next"));
+				//messageDisplayArea.append("You have disconnected");
+				//disallowClientToWrite();
 			}
 		});
 		btnNext.setBounds(423, 325, 70, 52);
@@ -135,24 +129,25 @@ public class ClientWindow extends JFrame implements Runnable {
 		
 		DefaultCaret caret = (DefaultCaret) messageDisplayArea.getCaret();
 		caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
-		//chatCard.add(messageDisplayArea);
 		
 		JScrollPane scrollPane = new JScrollPane(messageDisplayArea);
 		scrollPane.setBounds(10, 11, 596, 294);
 		chatCard.add(scrollPane);
 		
-
-		/*frame.*/getContentPane().add(cardPanel);
+		getContentPane().add(cardPanel);
 	}
 	
 	public String getUserTextMessage(String command){
 		String msg = new String(command);
 		msg  = msg.concat(":" +messageSendArea.getText()) ;
 		messageSendArea.setText("");
-		//chatClient.setSend(true);
 		messageSendArea.requestFocus();
 		System.out.println(msg);
 		return msg;
+	}
+	
+	public void resetMessageDisplayArea(){
+		messageDisplayArea.setText("");
 	}
 	
 	public void setMessageDisplayArea(String str){
@@ -163,6 +158,12 @@ public class ClientWindow extends JFrame implements Runnable {
 	public void allowClientToWrite(){
 		btnSend.setEnabled(true);
 		messageSendArea.setEditable(true);
+		//messageDisplayArea.setText("");
+	}
+	
+	public void disallowClientToWrite(){
+		btnSend.setEnabled(false);
+		messageSendArea.setEditable(false);
 	}
 	
 }
