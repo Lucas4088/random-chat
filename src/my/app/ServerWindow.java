@@ -14,6 +14,8 @@ public class ServerWindow extends JFrame implements Runnable {
 	private JTextArea notificationArea;
 	private ChatServer chatServer;
 	private int port;
+	private JButton btnStartServer;
+	private JButton btnStopServer;
 	/**
 	 * Launch the application.
 	 */
@@ -60,20 +62,21 @@ public class ServerWindow extends JFrame implements Runnable {
 		notificationArea.setBounds(10, 11, 414, 209);
 		//getContentPane().add(notificationArea);
 		
-		JButton btnStartServer = new JButton("Start");
+		btnStartServer = new JButton("Start");
 		btnStartServer.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				chatServer.establishConnection(port);
-				
+				disableStartButton();
 			}
 		});
 		btnStartServer.setBounds(94, 231, 89, 23);
 		getContentPane().add(btnStartServer);
 		
-		JButton btnStopServer = new JButton("Stop");
+		btnStopServer = new JButton("Stop");
 		btnStopServer.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				chatServer.stop();
+				disableStopButton();
+				chatServer.endConnection();
 			}
 		});
 		btnStopServer.setBounds(239, 231, 89, 23);
@@ -90,6 +93,19 @@ public class ServerWindow extends JFrame implements Runnable {
 		notificationArea.append("\n");
 	}
 
+	public void disableStartButton(){
+		btnStartServer.setEnabled(false);
+	}
 	
+	public void enableStartButton(){
+		btnStartServer.setEnabled(true);
+	}
 	
+	public void disableStopButton(){
+		btnStopServer.setEnabled(false);
+	}
+	
+	public void enableStopButton(){
+		btnStopServer.setEnabled(true);
+	}
 }

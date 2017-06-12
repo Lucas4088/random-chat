@@ -15,7 +15,7 @@ public class ChatClient implements Runnable  {
 
 	private Socket socket = null;
 	private Thread thread = null;
-	private DataInputStream streamIn = null;
+	//private DataInputStream streamIn = null;
 	private DataOutputStream streamOut = null;
 	private ChatClientThread client = null;
 	private ClientWindow  clientWindow = null;
@@ -25,7 +25,8 @@ public class ChatClient implements Runnable  {
 	private volatile boolean allowed;
 	private String userMessage;
 	private String[] serverMessage;
-	private String allow, disconnect, send, next,wait,ask,connect;
+	private String except;
+	private String allow, disconnect, send, next,wait,ask,connect,unavailable;
 	
 	//ustanawianie po³¹czenia z serwerem w konstruktorze 
 	public ChatClient(String sN, int sP) {
@@ -39,6 +40,7 @@ public class ChatClient implements Runnable  {
 		next = new String("Next");
 		wait = new String("Wait");
 		connect = new String("Connect");
+		unavailable = new String("Unavailable");
 		clientWindow = new ClientWindow(this);
 		allowed = false;
 		new Thread(clientWindow).start();
@@ -57,14 +59,32 @@ public class ChatClient implements Runnable  {
 			System.out.println("Host unknown: "+uhe.getMessage());
 		}catch(IOException ioe){
 			System.out.println("Unexpected exception: "+ ioe.getMessage());
+			except =ioe.getMessage();
 		}
 		
 		client = new ChatClientThread(this, socket);
 		new Thread(client).start();
 		
 	}
+	
+	public String getException(){
+		return except;
+	}
 	public void disconnect(){
-		stop();
+		
+		if(streamOut!=null){
+			try {
+				streamOut.writeUTF(socket.getLocalPort()+":"+disconnect);
+				streamOut.flush();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		//Tutaj zmiana pewnie do cofniêcia
+		client.stopClient();
+		
+		//thread = null;
 	}
 	@SuppressWarnings("deprecation")
 	@Override
@@ -77,8 +97,6 @@ public class ChatClient implements Runnable  {
 				}
 			try{
 				if(sent){
-					System.out.println("Sending: "+userMessage);
-					//System.out.println(userMessage);
 				streamOut.writeUTF(userMessage);
 				
 				streamOut.flush();
@@ -94,29 +112,57 @@ public class ChatClient implements Runnable  {
 	
 	//zakonczenie chatu
 	public void handle(String msg){
+		
 		serverMessage = msg.split(":", 3);
 		System.out.println("Received Message :"+msg);
+		
 		if(serverMessage[1].equals(connect)){
 			clientWindow.setMessageDisplayArea(serverMessage[2]);
 			allowed =true;
+			
 		}else if(serverMessage[1].equals(wait)){
+			
 			clientWindow.setMessageDisplayArea(serverMessage[2]);
+			clientWindow.disableNext();
 			disallowToSend();
 			allowed = false;
 			//askForOtherTalk();
 		}else if(serverMessage[1].equals(allow)){
+			
 			allowed = false;
+			clientWindow.enableNext();
 			clientWindow.allowClientToWrite();
 			clientWindow.resetMessageDisplayArea();
 			clientWindow.setMessageDisplayArea(serverMessage[2]);
+			
 		}else if(serverMessage[1].equals(send)){
+			
 			clientWindow.setMessageDisplayArea("Stranger: "+serverMessage[2]);
+			
 		}else if(serverMessage[1].equals(next)){
+			
 			clientWindow.setMessageDisplayArea(serverMessage[2]);
 			disallowToSend();
-			
 			allowed = false;
-		}
+			
+		}else if(serverMessage[1].equals(unavailable)){
+			
+			disallowToSend();
+			clientWindow.resetMessageDisplayArea();
+			clientWindow.disableNext();
+			clientWindow.setMessageDisplayArea(serverMessage[2]);
+			try {
+				if(streamOut != null){
+					streamOut.close();
+					streamOut = null;
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}/*else if(serverMessage[1].equals(disconnect)){
+			
+		}*/
 		
 	}
 	//rozpoczêcie klienta chatu
@@ -166,12 +212,19 @@ public class ChatClient implements Runnable  {
 		}
 		try{
 	         if (streamOut != null)  streamOut.close();
-	         if (socket    != null)  socket.close();
+	         
 		}catch(IOException ioe ){
 			System.out.println("Error closing ... "+ ioe.getMessage());
 		}
 		client.close();
-		client.stop();
+		if (socket    != null)
+			try {
+				socket.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		client.stopClient();
 	}
 
 	public static void main(String[] args) {

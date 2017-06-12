@@ -15,7 +15,7 @@ public class ChatServer implements Runnable {
 	private ServerWindow serverWindow;
 	private ChatServerThread client = null;
 	private String[] receivedMessage;
-	private String send, next, disconnect,ask, allow,wait,connect;
+	private String send, next, disconnect,ask, allow,wait,connect,unavailable;
 	private ArrayList<Talk> talks;
 	private Lock talkLock;
 	//private Lock lookLock;
@@ -33,6 +33,7 @@ public class ChatServer implements Runnable {
 		connect = new String("Connect");
 		disconnect = new String("Disconnect");
 		next = new String("Next");
+		unavailable = new String("Unavailable");
 		talks = new ArrayList<>();
 		
 		talkLock = new ReentrantLock();
@@ -48,7 +49,7 @@ public class ChatServer implements Runnable {
 				addThread(server.accept());
 			}catch(IOException ioe){
 				serverWindow.setNotificationArea("Server accept error: "+ ioe);
-				stop();
+				endConnection();
 			}
 		}
 	}
@@ -61,14 +62,13 @@ public class ChatServer implements Runnable {
 			server.setReuseAddress(true);
 			serverWindow.setNotificationArea("Server started: "+server);
 			start();
-			
-			//client = new ChatServerThread(this, server);
+			serverWindow.enableStopButton();
 		}catch(IOException ioe){
 			serverWindow.setNotificationArea("Cannot bind to port "+ port + ": "+ioe.getMessage());
 		}
 	}
 	
-	public void endConnection(){
+	/*public void endConnection(){
 		if(server != null)
 			try {
 				
@@ -78,7 +78,7 @@ public class ChatServer implements Runnable {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-	}
+	}*/
 
 	public static void main(String[] args) {
 		ChatServer server = null;
@@ -92,41 +92,44 @@ public class ChatServer implements Runnable {
 		receivedMessage = input.split(":", 3);
 
 		if(receivedMessage[1].equals(ask)){
+			
 			serverWindow.setNotificationArea(receivedMessage[0]+":Wait:");
 			clients.get(findClient(Integer.valueOf(receivedMessage[0]))).send(":"+wait+":Looking for a companion ...");
 			//rozpoczêcie poczukiwania towarzysza do rozmowy
 			clients.get(findClient(Integer.valueOf(receivedMessage[0]))).setChatting(false);
+			
 		}else if(receivedMessage[1].equals(send)){
 			
 			serverWindow.setNotificationArea("determining receiver");
 			determineReceiver(Integer.valueOf(receivedMessage[0])).send(input);
 			
 		}else if(receivedMessage[1].equals(next)){
+			
 			Talk talkToDelete = talkToDelete(Integer.valueOf(receivedMessage[0]));
 			if(talkToDelete == null){
 				clients.get(findClient(Integer.valueOf(receivedMessage[0]))).send(":"+connect+":Connect command");
 			}else{
 				ChatServerThread receiver = determineReceiver(Integer.valueOf(receivedMessage[0]));
-				//determineReceiver(Integer.valueOf(receivedMessage[0])).send(":"+next+":Stranger has disconnected");
 				removeTalk(talkToDelete);
-				receiver.send(":"+next+":Stranger has disconnected\n Press next to Look for Stranger");
+				receiver.send(":"+next+":Stranger has disconnected\nPress next to Look for Stranger");
 				clients.get(findClient(Integer.valueOf(receivedMessage[0]))).send(":"+next+":You have disconnected");
 				clients.get(findClient(Integer.valueOf(receivedMessage[0]))).send(":"+wait+":Waiting ...");
 				clients.get(findClient(Integer.valueOf(receivedMessage[0]))).send(":"+connect+":Connect command");
 			}
-			//clients.get(findClient(Integer.valueOf(receivedMessage[0]))).send(":"+connect+":");
-			//clients.get(findClient(Integer.valueOf(receivedMessage[0]))).setChatting(false);
-			
-			//determineReceiver(Integer.valueOf(receivedMessage[0])).send(":"+next+":Stranger has disconnected");
-			//determineReceiver(Integer.valueOf(receivedMessage[0])).send(":"+connect+":Stranger has disconnected");
-			//determineReceiver(Integer.valueOf(receivedMessage[0])).setChatting(false);
-			
-			
-			
-			
 			
 		}else if(receivedMessage[1].equals(disconnect)){
+			Talk talkToDelete = talkToDelete(Integer.valueOf(receivedMessage[0]));
+			ChatServerThread receiver = determineReceiver(Integer.valueOf(receivedMessage[0]));
 			
+			//receiver.send(":"+disconnect+":");
+			if(receiver != null){
+				removeTalk(talkToDelete);
+				receiver.send(":"+next+":Stranger has disconnected\nPress next to Look for Stranger");
+			}
+			
+			clients.get(findClient(Integer.valueOf(receivedMessage[0]))).disconnectClient();
+			clients.remove(findClient(Integer.valueOf(receivedMessage[0])));
+	
 		}
 	}
 	
@@ -175,7 +178,7 @@ public class ChatServer implements Runnable {
 		
 		while(!firstTalker.isChatting()&&(clients.size()<=1 || otherTalker.getID() == firstTalker.getID() || otherTalker.isChatting())){
 			otherTalker = clients.get(myRandom.nextInt(clients.size()));
-			System.out.println("Stuck");
+			//System.out.println("Stuck");
 		}
 		serverWindow.setNotificationArea("Second Talker Found: "+otherTalker.getID());
 		while(!unique){
@@ -215,8 +218,7 @@ public class ChatServer implements Runnable {
 			synchronized(talks){
 				talks.remove(t);
 			}
-			/*talk.getClient1().setChatting(false);
-			talk.getClient2().setChatting(false);*/
+			if(talk!= null)
 			serverWindow.setNotificationArea("Talk removed: "+talk.getTalkID());
 			
 			for(ChatServerThread client : clients){
@@ -226,9 +228,6 @@ public class ChatServer implements Runnable {
 	
 	public void addTalk(Talk t){
 
-		//t.getClient1().send(t.getClient1().getID()+":"+allow+":"+"");
-		//t.getClient2().send(t.getClient1().getID()+":"+allow+":"+"");
-		
 		t.getClient1().setChatting(true);
 		t.getClient2().setChatting(true);
 		synchronized(talks){	
@@ -256,7 +255,7 @@ public class ChatServer implements Runnable {
 	
 	
 	//stworzenie watku servera odpowiadaj¹cego za usuniecie klienta
-	public synchronized void remove(int ID){
+	/*public synchronized void remove(int ID){
 		int pos = findClient(ID);
 		
 		if(pos >= 0){
@@ -269,7 +268,7 @@ public class ChatServer implements Runnable {
 			}
 			toTerminate.stop();
 		}
-	}
+	}*/
 	
 	//znalezienie klienta
 	private int findClient(int ID){
@@ -288,11 +287,24 @@ public class ChatServer implements Runnable {
 		}
 	}
 	
-	@SuppressWarnings("deprecation")
-	public void stop() {
+	//@SuppressWarnings("deprecation")
+	public void endConnection() {
 		if(thread != null){
-			
+			for(ChatServerThread client : clients){
+				client.send(":"+unavailable+":Server unavailable\nTry Reconnecting");
+				client.disconnectClient();
+				
+			}
 			//thread.stop();
+			if(server != null){
+				try {
+					server.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			serverWindow.enableStartButton();
 			thread = null;
 		}
 	}

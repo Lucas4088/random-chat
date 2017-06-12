@@ -14,8 +14,9 @@ public class ChatClientThread implements Runnable {
 	private Socket socket = null;
 	private ChatClient client = null;
 	private DataInputStream streamIn = null;
-	
+	private Thread thread;
 	public ChatClientThread(ChatClient cli, Socket soc){
+		thread = new Thread();
 		client = cli;
 		socket = soc;
 		open();
@@ -44,7 +45,7 @@ public class ChatClientThread implements Runnable {
 	@Override
 	public void run(){
 		
-		while(true){
+		while(thread != null){
 			System.out.println("Working");
 			try{
 				client.handle(streamIn.readUTF());
@@ -56,8 +57,16 @@ public class ChatClientThread implements Runnable {
 	}
 	
 	
-	public void stop(){
-		this.stop();
+	public void stopClient(){
+		if(streamIn != null){
+			try {
+				streamIn.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		thread = null;
 	}
 
 }

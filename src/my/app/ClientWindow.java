@@ -7,13 +7,15 @@ import java.awt.CardLayout;
 import javax.swing.JPanel;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.event.ActionEvent;
 import javax.swing.JTextArea;
 import javax.swing.text.DefaultCaret;
 
 import java.awt.GridLayout;
 import javax.swing.JScrollPane;
-
+import static javax.swing.JOptionPane.showMessageDialog;
 public class ClientWindow extends JFrame implements Runnable {
 
 	private JFrame frame;
@@ -23,6 +25,7 @@ public class ClientWindow extends JFrame implements Runnable {
 	private CardLayout cards;
 	private ChatClient chatClient = null;
 	private JButton btnSend;
+	private JButton btnNext;
 	/**
 	 * Launch the application.
 	 */
@@ -48,6 +51,13 @@ public class ClientWindow extends JFrame implements Runnable {
 	 */
 	public ClientWindow(ChatClient cC) {
 		chatClient = cC;
+		addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent we){
+			cC.disconnect();
+			cC.stop();
+			System.exit(0);
+			}
+		});
 		initialize();
 	}
 
@@ -56,7 +66,7 @@ public class ClientWindow extends JFrame implements Runnable {
 	 */
 	private void initialize() {
 		setBounds(100, 100, 632, 427);
-		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		this.setTitle("Client");
 		cardLayout = new CardLayout();
 		
@@ -76,8 +86,14 @@ public class ClientWindow extends JFrame implements Runnable {
 		JButton btnNewButton = new JButton("Connect");
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
+				try{
 				chatClient.establishConnection();
 				cardLayout.show(cardPanel, "Chat Card");
+				}catch (Exception e1) {
+					
+					showMessageDialog(null, chatClient.getException());
+					// TODO: handle exception
+				}
 			}
 		});
 		getContentPane().setLayout(new GridLayout(0, 1, 0, 0));
@@ -103,12 +119,10 @@ public class ClientWindow extends JFrame implements Runnable {
 		btnSend.setBounds(343, 325, 70, 52);
 		chatCard.add(btnSend);
 		
-		JButton btnNext = new JButton("Next");
+		btnNext = new JButton("Next");
 		btnNext.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				chatClient.getUserMessage(getUserTextMessage("Next"));
-				//messageDisplayArea.append("You have disconnected");
-				//disallowClientToWrite();
 			}
 		});
 		btnNext.setBounds(423, 325, 70, 52);
@@ -159,6 +173,14 @@ public class ClientWindow extends JFrame implements Runnable {
 		btnSend.setEnabled(true);
 		messageSendArea.setEditable(true);
 		//messageDisplayArea.setText("");
+	}
+	
+	public void enableNext(){
+		btnNext.setEnabled(true);
+	}
+	
+	public void disableNext(){
+		btnNext.setEnabled(false);
 	}
 	
 	public void disallowClientToWrite(){
